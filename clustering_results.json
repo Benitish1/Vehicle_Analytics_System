@@ -1,0 +1,22 @@
+{
+    "income_cv_avg": 33.2,
+    "price_cv_avg": 21.97,
+    "income_cv_target_met": false,
+    "per_cluster": [
+        {
+            "client_class": "Economy",
+            "estimated_income_cv": 37.1645736539356,
+            "selling_price_cv": 28.449505646443985
+        },
+        {
+            "client_class": "Premium",
+            "estimated_income_cv": 30.160735188292172,
+            "selling_price_cv": 18.72774623872838
+        },
+        {
+            "client_class": "Standard",
+            "estimated_income_cv": 32.26606095913768,
+            "selling_price_cv": 18.73060905975482
+        }
+    ]
+}
