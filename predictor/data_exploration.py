@@ -16,14 +16,14 @@ def load_district_data():
         print(f"Error loading district JSON: {e}")
         return {}
 
+
 def district_map_chart(df: pd.DataFrame) -> str:
     """Return a Plotly bubble-map HTML div showing vehicle-client counts per district."""
     counts = df["district"].value_counts().reset_index()
     counts.columns = ["district", "clients"]
 
     districts_data = load_district_data()
-    
-    # Enrich with coordinates
+
     rows = []
     for _, row in counts.iterrows():
         d = row["district"]
@@ -31,43 +31,38 @@ def district_map_chart(df: pd.DataFrame) -> str:
             data = districts_data[d]
             rows.append({
                 "district": d,
-                "clients":  row["clients"],
-                "lat":      data["lat"],
-                "lon":      data.get("lon") or data.get("8.9328") or data.get("29.7789"), # Handle possible typos in manual JSON
-                "colour":   data["color"],
+                "clients": row["clients"],
+                "lat": data["lat"],
+                "lon": data.get("lon") or data.get("8.9328") or data.get("29.7789"),
+                "colour": data["color"],
                 "province": data["province"],
             })
-    
+
     if not rows:
         return "<div class='alert alert-warning'>No district data found for map.</div>"
-        
-    map_df = pd.DataFrame(rows)
 
+    map_df = pd.DataFrame(rows)
     fig = go.Figure()
 
-    # One trace per province for a clean legend
     for prov, grp in map_df.groupby("province"):
-        fig.add_trace(go.Scattermapbox(
-    lat=grp["lat"],
-    lon=grp["lon"],
-    mode="text",
-    marker=dict(
-        size=1,
-        opacity=0
-    ),
-    text=grp["district"],
-    textposition="top center",
-    customdata=list(zip(grp["clients"], [prov] * len(grp))),
-    hovertemplate=(
-        "<b>%{text}</b><br>"
-        "Province: %{customdata[1]}<br>"
-        "Vehicle Clients: %{customdata[0]}<extra></extra>"
-    ),
-    name=f"{prov} Province",
-))
+        fig.add_trace(go.Scattermap(
+            lat=grp["lat"],
+            lon=grp["lon"],
+            mode="text",
+            marker=dict(size=1, opacity=0),
+            text=grp["district"],
+            textposition="top center",
+            customdata=list(zip(grp["clients"], [prov] * len(grp))),
+            hovertemplate=(
+                "<b>%{text}</b><br>"
+                "Province: %{customdata[1]}<br>"
+                "Vehicle Clients: %{customdata[0]}<extra></extra>"
+            ),
+            name=f"{prov} Province",
+        ))
 
     fig.update_layout(
-        mapbox=dict(
+        map=dict(
             style="open-street-map",
             center=dict(lat=-1.9403, lon=29.8739),
             zoom=7.2,
@@ -81,7 +76,8 @@ def district_map_chart(df: pd.DataFrame) -> str:
         ),
         legend=dict(
             orientation="v",
-            x=1.0, y=1.0,
+            x=1.0,
+            y=1.0,
             bgcolor="rgba(255,255,255,0.85)",
             bordercolor="#ccc",
             borderwidth=1,
