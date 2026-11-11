@@ -81,3 +81,6 @@ def clustering_analysis(request):
             context["error"] = traceback.format_exc()
 
     return render(request, "predictor/clustering_analysis.html", context)
+
+def home(request):
+    return render(request, "predictor/index.html")
