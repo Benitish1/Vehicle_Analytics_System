@@ -1,3 +1,4 @@
+
 import pandas as pd
 import plotly.graph_objects as go
 import json
@@ -6,6 +7,7 @@ import os
 # Base directory for the project
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 JSON_PATH = os.path.join(BASE_DIR, "dummy-data", "rwanda_districts.json")
+
 
 def load_district_data():
     """Load district coordinates and province mapping from JSON."""
@@ -19,16 +21,20 @@ def load_district_data():
 
 def district_map_chart(df: pd.DataFrame) -> str:
     """Return a Plotly bubble-map HTML div showing vehicle-client counts per district."""
+
     counts = df["district"].value_counts().reset_index()
     counts.columns = ["district", "clients"]
 
     districts_data = load_district_data()
 
     rows = []
+
     for _, row in counts.iterrows():
         d = row["district"]
+
         if d in districts_data:
             data = districts_data[d]
+
             rows.append({
                 "district": d,
                 "clients": row["clients"],
@@ -42,16 +48,31 @@ def district_map_chart(df: pd.DataFrame) -> str:
         return "<div class='alert alert-warning'>No district data found for map.</div>"
 
     map_df = pd.DataFrame(rows)
+
+    # Ensure coordinates are valid numbers
+    map_df["lat"] = pd.to_numeric(map_df["lat"], errors="coerce")
+    map_df["lon"] = pd.to_numeric(map_df["lon"], errors="coerce")
+
+    map_df = map_df.dropna(subset=["lat", "lon"])
+
+    if map_df.empty:
+        return "<div class='alert alert-warning'>No valid district coordinates found.</div>"
+
     fig = go.Figure()
 
+    # Add district markers grouped by province
     for prov, grp in map_df.groupby("province"):
+
         fig.add_trace(go.Scattermap(
             lat=grp["lat"],
             lon=grp["lon"],
-            mode="text",
-            marker=dict(size=1, opacity=0),
+            mode="markers",
+            marker=dict(
+                size=10,
+                color=grp["colour"].tolist(),
+                opacity=0.85,
+            ),
             text=grp["district"],
-            textposition="top center",
             customdata=list(zip(grp["clients"], [prov] * len(grp))),
             hovertemplate=(
                 "<b>%{text}</b><br>"
@@ -88,7 +109,7 @@ def district_map_chart(df: pd.DataFrame) -> str:
     return fig.to_html(full_html=False, include_plotlyjs="cdn")
 
 
-# existing functions
+# Existing functions
 
 def dataset_exploration(df):
     return df.head().to_html(
