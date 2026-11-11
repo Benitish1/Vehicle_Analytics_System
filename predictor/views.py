@@ -83,4 +83,4 @@ def clustering_analysis(request):
     return render(request, "predictor/clustering_analysis.html", context)
 
 def home(request):
-    return render(request, "predictor/index.html")
+    return data_exploration_view(request)
