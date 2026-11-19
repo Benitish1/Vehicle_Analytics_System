@@ -76,4 +76,10 @@ def clustering_analysis(request):
     return render(request, "predictor/clustering_analysis.html", context)
 
 def home(request):
-    return data_exploration_view(request)
+    df = pd.read_csv("dummy-data/vehicles_ml_dataset.csv")
+    stats = {
+        "records":       f"{len(df):,}",
+        "districts":     df["district"].nunique(),
+        "manufacturers": df["manufacturer"].nunique(),
+    }
+    return render(request, "predictor/landing.html", {"stats": stats})
