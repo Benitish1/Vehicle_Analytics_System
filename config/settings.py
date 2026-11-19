@@ -18,11 +18,11 @@ ALLOWED_HOSTS = [
     if host.strip()
 ]
 
-# Automatically include Render's hostname
-RENDER_HOST = os.environ.get("RENDER_EXTERNAL_HOSTNAME")
+# Vercel: allow all *.vercel.app deployment and production hostnames
+ON_VERCEL = bool(os.environ.get("VERCEL"))
 
-if RENDER_HOST and RENDER_HOST not in ALLOWED_HOSTS:
-    ALLOWED_HOSTS.append(RENDER_HOST)
+if ON_VERCEL:
+    ALLOWED_HOSTS.append(".vercel.app")
 
 # Applications
 INSTALLED_APPS = [
@@ -66,7 +66,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-# Database: PostgreSQL on Render, SQLite locally
+# Database: DATABASE_URL if set, SQLite locally
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
 if DATABASE_URL:
@@ -120,10 +120,12 @@ STORAGES = {
     },
 }
 
-# HTTPS and CSRF settings for Render
+# Vercel has no collectstatic step: serve static files straight from app dirs
+if ON_VERCEL:
+    STORAGES["staticfiles"]["BACKEND"] = "django.contrib.staticfiles.storage.StaticFilesStorage"
+    WHITENOISE_USE_FINDERS = True
+
+# HTTPS and CSRF settings
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
-CSRF_TRUSTED_ORIGINS = []
-
-if RENDER_HOST:
-    CSRF_TRUSTED_ORIGINS.append(f"https://{RENDER_HOST}")
+CSRF_TRUSTED_ORIGINS = ["https://*.vercel.app"] if ON_VERCEL else []

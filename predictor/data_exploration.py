@@ -21,6 +21,34 @@ def load_district_data():
 
 
 
+def _ring_area(ring):
+    return sum(
+        ring[i][0] * ring[i + 1][1] - ring[i + 1][0] * ring[i][1]
+        for i in range(len(ring) - 1)
+    ) / 2
+
+
+def _rewind_for_plotly(geojson):
+    """Make exterior rings clockwise and holes counter-clockwise (d3-geo order).
+
+    Standard GeoJSON uses the opposite order; with it Plotly fills the whole
+    map with each district, so only the last one drawn stays visible.
+    """
+    for feature in geojson["features"]:
+        geometry = feature["geometry"]
+        polygons = (
+            [geometry["coordinates"]]
+            if geometry["type"] == "Polygon"
+            else geometry["coordinates"]
+        )
+        for polygon in polygons:
+            for i, ring in enumerate(polygon):
+                is_exterior = i == 0
+                if (_ring_area(ring) > 0) == is_exterior:
+                    ring.reverse()
+    return geojson
+
+
 def district_map_chart(df: pd.DataFrame) -> str:
     """Create an interactive Rwanda district choropleth without external map tiles."""
 
@@ -28,7 +56,7 @@ def district_map_chart(df: pd.DataFrame) -> str:
 
     try:
         with open(GEOJSON_PATH, "r", encoding="utf-8") as f:
-            geojson = json.load(f)
+            geojson = _rewind_for_plotly(json.load(f))
 
         # Extract district names from GeoJSON
         district_names = [

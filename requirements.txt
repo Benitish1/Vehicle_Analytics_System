@@ -1,10 +1,7 @@
-django 
-pandas 
-scikit-learn 
-matplotlib 
-seaborn 
+django
+pandas
+scikit-learn
 joblib
 plotly
-gunicorn
 whitenoise
 dj-database-url

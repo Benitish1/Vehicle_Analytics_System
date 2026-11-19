@@ -24,8 +24,6 @@ df["selling_price"] = np.log1p(df["selling_price"])
 scaler = StandardScaler()
 X = scaler.fit_transform(df[SEGMENT_FEATURES])
 
-# Save scaler
-joblib.dump(scaler, "model_generators/clustering/scaler.pkl")
 
 # ---------------------------
 # STEP 3: Train KMeans
@@ -55,8 +53,6 @@ cluster_mapping = {
 
 df["client_class"] = df["cluster_id"].map(cluster_mapping)
 
-# Save model
-joblib.dump(kmeans, "model_generators/clustering/clustering_model.pkl")
 
 # ---------------------------
 # STEP 5: Silhouette Score
@@ -162,13 +158,7 @@ comparison_df = df[
 # ---------------------------
 def predict_client_segment(estimated_income, predicted_price):
     try:
-        model = joblib.load(
-            "model_generators/clustering/clustering_model.pkl"
-        )
-
-        scaler = joblib.load(
-            "model_generators/clustering/scaler.pkl"
-        )
+        model = kmeans
 
         x_raw = np.array([[estimated_income, predicted_price]])
 
@@ -231,6 +221,9 @@ def evaluate_clustering_model():
 # CLI Output
 # ---------------------------
 if __name__ == "__main__":
+
+    joblib.dump(scaler, "model_generators/clustering/scaler.pkl")
+    joblib.dump(kmeans, "model_generators/clustering/clustering_model.pkl")
 
     print(f"Silhouette Score: {silhouette_avg}")
     print(f"Distance CV: {distance_cv}%")

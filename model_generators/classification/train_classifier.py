@@ -22,8 +22,6 @@ X_train, X_test, y_train, y_test = train_test_split(
 model = RandomForestClassifier(n_estimators=100, random_state=42)
 model.fit(X_train, y_train)
 
-# Save model
-joblib.dump(model, "model_generators/classification/classification_model.pkl")
 
 # Predict
 predictions = model.predict(X_test)
@@ -50,4 +48,5 @@ def evaluate_classification_model():
     }
 
 if __name__ == "__main__":
+    joblib.dump(model, "model_generators/classification/classification_model.pkl")
     print(f"Classification Model Evaluated. Accuracy: {accuracy}")

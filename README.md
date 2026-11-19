@@ -8,7 +8,7 @@ This project demonstrates how backend data processing in Python can be integrate
 
 ## 🚀 Live Demo
 
-**Try the application:** [Vehicle Analytics System](https://vehicle-analytics-system.onrender.com)
+**Try the application:** [Vehicle Analytics System](https://vehicle-analytics-system.vercel.app)
 
 ---
 

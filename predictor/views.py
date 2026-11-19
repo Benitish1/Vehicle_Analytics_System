@@ -1,17 +1,10 @@
-import joblib
 import pandas as pd
 import traceback
 from django.shortcuts import render
 from predictor.data_exploration import dataset_exploration, data_exploration, district_map_chart
 from model_generators.clustering.train_cluster import evaluate_clustering_model, predict_client_segment
-from model_generators.classification.train_classifier import evaluate_classification_model
-from model_generators.regression.train_regression import evaluate_regression_model
-
-# Load models once
-regression_model    = joblib.load("model_generators/regression/regression_model.pkl")
-classification_model = joblib.load("model_generators/classification/classification_model.pkl")
-# clustering_model is loaded inside the train_cluster functions but for manual use:
-# _clustering_kmeans = joblib.load("model_generators/clustering/clustering_model.pkl")
+from model_generators.classification.train_classifier import evaluate_classification_model, model as classification_model
+from model_generators.regression.train_regression import evaluate_regression_model, model as regression_model
 
 def data_exploration_view(request):
     df = pd.read_csv("dummy-data/vehicles_ml_dataset.csv")
