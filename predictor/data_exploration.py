@@ -3,6 +3,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import json
 import os
+from functools import lru_cache
 import plotly.express as px
 
 # Base directory for the project
@@ -49,14 +50,63 @@ def _rewind_for_plotly(geojson):
     return geojson
 
 
+GEOJSON_PATH = os.path.join(BASE_DIR, "Rwanda_Districts.geojson")
+# ~0.001 deg is roughly 100 m: invisible at country zoom, cuts ~149k points to a few thousand
+SIMPLIFY_TOLERANCE = 0.001
+
+
+def _simplify_ring(ring, tolerance):
+    """Douglas-Peucker line simplification (iterative, keeps ring closed)."""
+    if len(ring) <= 4:
+        return ring
+    keep = [False] * len(ring)
+    keep[0] = keep[-1] = True
+    stack = [(0, len(ring) - 1)]
+    while stack:
+        start, end = stack.pop()
+        (x1, y1), (x2, y2) = ring[start][:2], ring[end][:2]
+        dx, dy = x2 - x1, y2 - y1
+        norm = (dx * dx + dy * dy) ** 0.5
+        max_dist, index = 0.0, None
+        for i in range(start + 1, end):
+            px, py = ring[i][:2]
+            if norm == 0:
+                dist = ((px - x1) ** 2 + (py - y1) ** 2) ** 0.5
+            else:
+                dist = abs(dy * px - dx * py + x2 * y1 - y2 * x1) / norm
+            if dist > max_dist:
+                max_dist, index = dist, i
+        if index is not None and max_dist > tolerance:
+            keep[index] = True
+            stack.append((start, index))
+            stack.append((index, end))
+    simplified = [[round(p[0], 4), round(p[1], 4)] for p, k in zip(ring, keep) if k]
+    # A ring needs at least 4 positions; fall back to the original if over-simplified
+    return simplified if len(simplified) >= 4 else ring
+
+
+@lru_cache(maxsize=1)
+def _load_district_geojson():
+    """Load, simplify and rewind the district boundaries once per process."""
+    with open(GEOJSON_PATH, "r", encoding="utf-8") as f:
+        geojson = json.load(f)
+    for feature in geojson["features"]:
+        geometry = feature["geometry"]
+        polygons = (
+            [geometry["coordinates"]]
+            if geometry["type"] == "Polygon"
+            else geometry["coordinates"]
+        )
+        for polygon in polygons:
+            polygon[:] = [_simplify_ring(ring, SIMPLIFY_TOLERANCE) for ring in polygon]
+    return _rewind_for_plotly(geojson)
+
+
 def district_map_chart(df: pd.DataFrame) -> str:
     """Create an interactive Rwanda district choropleth without external map tiles."""
 
-    GEOJSON_PATH = os.path.join(BASE_DIR, "Rwanda_Districts.geojson")
-
     try:
-        with open(GEOJSON_PATH, "r", encoding="utf-8") as f:
-            geojson = _rewind_for_plotly(json.load(f))
+        geojson = _load_district_geojson()
 
         # Extract district names from GeoJSON
         district_names = [
